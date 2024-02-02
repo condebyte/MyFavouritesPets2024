@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/filter_all"
+        android:title="Todos" />
+    <item android:id="@+id/filter_grave"
+        android:title="Mucho" />
+    <item android:id="@+id/filter_medium"
+        android:title="Medio" />
+    <item android:id="@+id/filter_light"
+        android:title="Poco" />
+</menu>
