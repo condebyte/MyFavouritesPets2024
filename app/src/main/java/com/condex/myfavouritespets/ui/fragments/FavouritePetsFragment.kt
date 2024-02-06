@@ -37,9 +37,10 @@ class FavouritePetsFragment: Fragment() {
     }
 
     private fun loadFavouritePets() {
-        val favouritePets = DataSource.petDataSource().listPet(ctx).filter { it.favotiro }
+        val favouritePets = DataSource.petDataSource(ctx).listPets().filter { it.favotiro }
         adapter = PetListAdapter(ctx, favouritePets)
         binding.listview.adapter = adapter
+        // Configurando la vista que se muestra cuando la lista está vacía
         binding.listview.emptyView = binding.txtEmptyview
     }
 }

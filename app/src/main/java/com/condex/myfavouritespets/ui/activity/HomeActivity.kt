@@ -1,5 +1,6 @@
 package com.condex.myfavouritespets.ui.activity
 
+import PetListFragment
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
@@ -11,7 +12,7 @@ import com.condex.myfavouritespets.databinding.ActivityHomeBinding
 import com.condex.myfavouritespets.ui.NavigationManager
 import com.condex.myfavouritespets.ui.adapters.FragmentAdapter
 import com.condex.myfavouritespets.ui.fragments.FavouritePetsFragment
-import com.condex.myfavouritespets.ui.fragments.PetListFragment
+
 import com.google.android.material.tabs.TabLayoutMediator
 
 class HomeActivity: AppCompatActivity() {
@@ -36,6 +37,7 @@ class HomeActivity: AppCompatActivity() {
         petListFragment = PetListFragment()
         favouritePetsFragment = FavouritePetsFragment()
         adapter.addFragment(petListFragment!!,"Mascotas")
+        adapter.addFragment(favouritePetsFragment, "Favoritos")
 
 
         binding.viewPager2.adapter = adapter

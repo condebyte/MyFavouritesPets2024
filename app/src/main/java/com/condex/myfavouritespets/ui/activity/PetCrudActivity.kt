@@ -5,6 +5,7 @@ import android.R
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -16,11 +17,16 @@ import com.condex.myfavouritespets.databinding.ActivityPetCrudBinding
 import com.condex.myfavouritespets.model.DataSource
 import com.condex.myfavouritespets.model.pet.NivelAmor
 import com.condex.myfavouritespets.model.pet.Pet
-import com.condex.myfavouritespets.utils.DialogManager
+import com.condex.myfavouritespets.model.pet.PetDbHelper
+import com.condex.myfavouritespets.model.pet.SQLitePetDataSource
+
 import com.condex.myfavouritespets.utils.FileManager
+import com.google.android.material.snackbar.Snackbar
+import java.io.File
 
 class PetCrudActivity: AppCompatActivity() {
     private lateinit var binding: ActivityPetCrudBinding
+    private lateinit var dataSource: SQLitePetDataSource
 
     private val MY_PERMISSIONS_REQUEST_CAPTURE_CAMERA = 1223432
     private val MY_PERMISSIONS_REQUEST_CODE = 123456
@@ -33,9 +39,31 @@ class PetCrudActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityPetCrudBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        dataSource = SQLitePetDataSource(PetDbHelper(this))
+
+        petId = intent?.getIntExtra(EXTRA_ID, -1) ?: -1
+        if (petId != -1) {
+            loadPetData(petId!!)
+        }
+
         configView()
         setListener()
+    }
 
+    private fun loadPetData(id: Int) {
+        val pet = dataSource.getPet(id) // Modificación aquí
+        // Actualiza la UI con los datos de la mascota
+        val imgFile = File(pet.foto)
+        if (imgFile.exists()) {
+            val myBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
+            binding.imgButton.setImageBitmap(myBitmap)
+        }
+
+        binding.Name.setText(pet.Nombre)
+        binding.Clase.editText?.setText(pet.clase)
+        binding.Pelaje.editText?.setText(pet.tipoPelaje)
+        binding.enlaceweb.editText?.setText(pet.enlacePagWeb)
     }
 
     private fun configView() {
@@ -66,84 +94,70 @@ class PetCrudActivity: AppCompatActivity() {
             }
         }
         binding.button.setOnClickListener {
-            val address = binding.Name.text.toString()
+            val Nombre = binding.Name.text.toString()
             val Pelaje = binding.Pelaje.editText?.text.toString()
-            val TipoAmor = binding.editType.editText?.text.toString()
+            val Nivelamor = binding.editType.editText?.text.toString()
             val comentario = binding.enlaceweb.editText?.text.toString()
             val clase = binding.Clase.editText?.text.toString()
-            val favorito= binding.button.isOrWillBeHidden
+            val favorito= binding.checkboxFavorito.isChecked
+            val web= binding.enlaceweb.editText?.text.toString()
 
-            savePet(photo, address, Pelaje, TipoAmor, comentario, clase, favorito)
+            savePet(photo, Nombre, Pelaje, Nivelamor, comentario, clase, favorito,web)
         }
     }
 
     private fun savePet(
         photo: String?,
-        address:String,
+        Nombre: String,
         pelaje: String,
-        TipoAmor: String,
+        Nivelamor: String,
         comentario: String,
         clase: String,
-        favorito: Boolean
+        favorito: Boolean,
+        web: String
+    ) {
+        when {
+            photo == null -> showSnackbar("El campo foto no puede estar vacío.")
+            Nombre.isEmpty() -> showSnackbar("El campo nombre no puede estar vacío.")
+            pelaje.isEmpty() -> showSnackbar("El campo pelaje no puede estar vacío.")
+            Nivelamor.isEmpty() -> showSnackbar("El campo nivel de amor no puede estar vacío.")
+            comentario.isEmpty() -> showSnackbar("El campo comentario no puede estar vacío.")
+            clase.isEmpty() -> showSnackbar("El campo clase no puede estar vacío.")
+            else -> {
+                try {
+                    val tipoPet = NivelAmor.valueOf(Nivelamor)
+                    val pet = Pet(
+                        id = petId ?: 0, // Usar petId si está editando, o 0 si está creando uno nuevo
+                        Nombre = Nombre,
+                        tipoPelaje = pelaje,
+                        clase = clase,
+                        foto = photo ?: "",
+                        nivelAmorosidad = tipoPet,
+                        enlacePagWeb = web,
+                        favotiro = favorito
+                    )
 
-    ){
-        if (controlPet(photo, address, pelaje, TipoAmor, comentario, clase, favorito)){
-            DataSource.petDataSource().addPet(
-                this,
-                Pet(
-                    0,
-                    address,
-                    photo!!,
-                    pelaje,
-                    comentario,
-                    NivelAmor.valueOf(TipoAmor),
-                    clase,
-                    favorito,
-                )
-            )
-            finish()
+                    // Determina si es una nueva mascota o una actualización
+                    createNew = petId == null || petId == -1
+
+                    if (createNew) {
+                        // Añadir nuevo Pet
+                        dataSource.addPet(pet)
+                    } else {
+                        // Actualizar Pet existente
+                        dataSource.updatePet(pet.id, pet)
+                    }
+
+                    finish()
+                } catch (e: IllegalArgumentException) {
+                    showSnackbar("Valor no válido para el nivel de amor.")
+                }
+            }
         }
     }
 
-    private fun controlPet(
-        photo: String?,
-        address: String,
-        pelaje: String,
-        TipoAmor: String,
-        comentario: String,
-        clase: String,
-        favorito: Boolean
-    ): Boolean{
-        var accepted = true
-        if(photo == null){
-            DialogManager.alertDialog(
-                this,
-                "Faltan datos",
-                "El campo foto no puede estar vacio."
-            )
-            accepted = false
-        }
-        if(address == null){
-            DialogManager.alertDialog(this, "Faltan datos", "El campo nombre no puede estar vacio.")
-            accepted = false
-        }
-        if(pelaje == null) {
-            DialogManager.alertDialog(
-                this,
-                "Faltan datos",
-                "El campo pelaje no puede estar vacio."
-            )
-            accepted = false
-        }
-        if (TipoAmor.isEmpty()) {
-            DialogManager.alertDialog(
-                this,
-                "Faltan datos",
-                "El campo Nivel de amor no puede estar vacio."
-            )
-            accepted = false
-        }
-        return accepted
+    private fun showSnackbar(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
     }
 
     override fun onRequestPermissionsResult(
@@ -170,15 +184,13 @@ class PetCrudActivity: AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(
-        requestCode: Int,
-        resultCode: Int, data: Intent?
-    ) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode === MY_PERMISSIONS_REQUEST_CODE && resultCode === RESULT_OK) {
-            val thumbnail: Bitmap = data?.getParcelableExtra("data")!!
+        if (requestCode == MY_PERMISSIONS_REQUEST_CODE && resultCode == RESULT_OK) {
+            val thumbnail: Bitmap = data?.extras?.get("data") as Bitmap
             binding.imgButton.setImageBitmap(thumbnail)
-            photo = FileManager.saveBitmapToFile(this, thumbnail,"photo.png")
+            // Guarda la foto y obtiene la ruta al archivo
+            photo = FileManager.saveBitmapToFile(this, thumbnail, "photo_pet.png")
         }
     }
 

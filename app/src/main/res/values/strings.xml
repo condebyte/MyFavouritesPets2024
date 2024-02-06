@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">MyFavouritesPets</string>
+    <string name="button">Button</string>
+    <string name="empty_chuches">No hay chuches</string>
+    <string name="empty_favourites_chuches">No hay chuches favoritas</string>
+    <string name="all">Todos</string>
+    <string name="caramel">Caramelo</string>
+    <string name="gum">Chicle</string>
+    <string name="yummy">Masticable</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Eliminar</string>
+    <string name="enlace">Sitio Web</string>
+    <string name="favorite">Favorito</string>
+    <string name="dulzor_level">Nivel de dulzor</string>
+    <string name="fabricante">Fabricante</string>
+    <string name="sell_format">Formato de venta</string>
+    <string name="candy_type">Tipo de dulce</string>
+    <string name="name">Nombre</string>
+    <string name="upload_image">Subir Imagen</string>
+    <string name="save">Guardar</string>
+    <string name="name2">Nombre:</string>
+    <string name="fabricante2">Fabricante:</string>
+    <string name="candy_type2">Tipo de dulce:</string>
+    <string name="sell_format2">Formato de venta:</string>
+    <string name="dulzor_level2">Nivel de dulzor:</string>
+    <string name="enlace2">Sitio Web:</string>
+    <string name="back">Back</string>
 </resources>

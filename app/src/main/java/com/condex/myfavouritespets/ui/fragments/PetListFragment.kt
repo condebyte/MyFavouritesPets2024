@@ -1,5 +1,3 @@
-package com.condex.myfavouritespets.ui.fragments
-
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,29 +9,27 @@ import com.condex.myfavouritespets.databinding.FragmentPetListBinding
 import com.condex.myfavouritespets.model.DataSource
 import com.condex.myfavouritespets.model.pet.NivelAmor
 import com.condex.myfavouritespets.model.pet.Pet
+import com.condex.myfavouritespets.model.pet.SQLitePetDataSource
 import com.condex.myfavouritespets.ui.NavigationManager
 import com.condex.myfavouritespets.ui.adapters.PetListAdapter
-import java.util.Locale.filter
 
-class PetListFragment: Fragment() {
+class PetListFragment : Fragment() {
 
     private lateinit var binding: FragmentPetListBinding
     private lateinit var ctx: Context
+    private lateinit var dataSource: SQLitePetDataSource
     private lateinit var adapter: PetListAdapter
 
     private var filter: NivelAmor? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        ctx= context
+        ctx = context
+        dataSource = DataSource.petDataSource(ctx) // Asegúrate de que este método devuelve correctamente SQLitePetDataSource
     }
 
-    override fun onCreateView(
-        inflater : LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState:Bundle?
-    ): View? {
-        binding = FragmentPetListBinding.inflate(inflater)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        binding = FragmentPetListBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -44,38 +40,34 @@ class PetListFragment: Fragment() {
     }
 
     private fun setListener() {
-        binding.listview.onItemClickListener =
-            AdapterView.OnItemClickListener { parent, view, position, id ->
-                val item = adapter.getItem(position)
-                if (item is Pet) {
-                    val pet: Pet = item
-                    NavigationManager.openPetDetail(ctx, pet.id)
-                }
-            }
-        adapter.onDeleteClickListener= object :PetListAdapter.OnDeleteClickListener{
+        binding.listview.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+            val petId = adapter.getItemId(position)
+            NavigationManager.openPetDetail(ctx, petId.toInt())
+        }
+
+        adapter.onDeleteClickListener = object : PetListAdapter.OnDeleteClickListener {
             override fun onChucheDeleteClick(pet: Pet) {
-                DataSource.petDataSource().borrarPet(ctx, pet.id)
+                dataSource.deletePet(pet.id) // Usando el método correcto
                 filter()
             }
         }
-
     }
 
     private fun configView() {
-        val pets = ArrayList<Pet>()
-        adapter = PetListAdapter(ctx, pets)
-        binding.listview.adapter = adapter
-        binding.listview.emptyView = binding.txtEmptyview
         filter()
     }
 
     private fun filter() {
-        var accidentes = DataSource.petDataSource().listPet(ctx)
-        if (filter != null) {
-            accidentes = accidentes.filter { it.nivelAmorosidad == filter }
+        val pets = if (filter == null) {
+            dataSource.listPets() // Usando el método correcto
+        } else {
+            dataSource.listPets().filter { it.nivelAmorosidad == filter }
         }
-        adapter.setData(accidentes)
+        adapter = PetListAdapter(ctx, pets)
+        binding.listview.adapter = adapter
+        binding.listview.emptyView = binding.txtEmptyview
     }
+
     fun filterGrave() {
         filter = NivelAmor.Mucho
         filter()
@@ -95,6 +87,4 @@ class PetListFragment: Fragment() {
         filter = null
         filter()
     }
-
-
 }

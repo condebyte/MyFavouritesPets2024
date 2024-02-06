@@ -21,23 +21,33 @@ class PetListAdapter(var context: Context, private var list: List<Pet>) : BaseAd
         return this.list[position]
     }
 
-    override fun getItemId(p0: Int): Long {
-        return p0.toLong()
+    override fun getItemId(position: Int): Long {
+        return list[position].id.toLong()
     }
 
-    override fun getView(position: Int, p1: View?, p2: ViewGroup?): View {
-        val item = this.list[position]
-        val inflator = context.getSystemService(
-            Context.LAYOUT_INFLATER_SERVICE
-        ) as LayoutInflater
-        val binding = PetAdapterItemBinding.inflate(inflator)
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+        val binding = if (convertView == null) {
+            val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            PetAdapterItemBinding.inflate(inflater, parent, false)
+        } else {
+            PetAdapterItemBinding.bind(convertView)
+        }
+        val item = list[position]
 
         binding.txtModel.text = item.nivelAmorosidad.name
+
+
         val image = FileManager.loadBitmapFromFilePath(item.foto)
         if (image != null) {
             binding.imageView.setImageBitmap(FileManager.loadBitmapFromFilePath(item.foto))
         } else {
             binding.imageView.setImageResource(R.drawable.ic_launcher_foreground)
+        }
+
+        if (item.favotiro) {
+            binding.imgButtonFav.setImageResource(R.drawable.star_filled)
+        } else {
+            binding.imgButtonFav.setImageResource(R.drawable.star_unfilled)
         }
 
 
@@ -47,10 +57,7 @@ class PetListAdapter(var context: Context, private var list: List<Pet>) : BaseAd
             NavigationManager.openPetUpdate(context, item.id)
         }
         binding.btnDelete.setOnClickListener {
-
-            val pet = getItem(position) as Pet
-            onDeleteClickListener?.onChucheDeleteClick(pet)
-
+            onDeleteClickListener?.onChucheDeleteClick(item)
         }
         return binding.root
     }
